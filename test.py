@@ -2,49 +2,48 @@ from profiler import Profiler
 import time
 
 def looper():
-	for _ in range(2):
-		A()
-		C()
+    for _ in range(500):
+        A()
+        C()
 
 def A():
-	B()
+	for _ in range(12):
+		B()
 
 def B():
-	global temp, arr
-	arr.append(temp[:])
+    global temp, arr
+    arr.append(temp[:])
 
 def C():
-	global temp, arr
-	arr.append(temp[:])
+    global temp, arr
+    arr.append(temp[:])
 
 temp = []
 arr = []
-for x in range(1000000):
-	temp.append(x)
+for x in range(100):
+    temp.append(x)
 
 def main():
-	newProfiler = Profiler(test_timing=True, timing_isolation=False, test_lines=True)
+    y = 1
+    for x in range(y):
 
-	start1 = time.time()
-	newProfiler.run(looper)
-	end1 = time.time()
-	end_profile = newProfiler.printFunctionTimings()
-	newProfiler.printLineTraces()
+        newProfiler = Profiler(test_timing=True)
+        temp = []
 
-	start = time.time()
-	looper()
-	end = time.time()
-	"""
-	1) Profiled execution time
-	2) Regular execution time
-	3) Difference between profiled display time and regular time (measuring error)
-	"""
-	print((end1 - start1) * 1000)
-	print((end - start) * 1000)
-	print(end_profile)
+        start1 = time.perf_counter()
+        newProfiler.run(looper)
+        end1 = time.perf_counter()
+        end_profile = newProfiler.printFunctionTimings()
 
+        #newProfiler.clear()
 
+        start = time.perf_counter()
+        looper()
+        end = time.perf_counter()
 
+        print((end1-start1)*1000, " original")
+        print((end1-start1)*1000 - newProfiler.function_runtime_overhead[-1], " original - overhead")
+        print((end-start)*1000, " default")
 
 if __name__ == "__main__":
-	main()
+    main()
