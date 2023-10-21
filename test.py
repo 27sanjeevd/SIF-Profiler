@@ -2,13 +2,13 @@ from profiler import Profiler
 import time
 
 def looper():
-    for _ in range(500):
+    for _ in range(150):
         A()
-        C()
 
 def A():
-	for _ in range(12):
-		B()
+    for _ in range(120):
+        C()
+        B()
 
 def B():
     global temp, arr
@@ -20,7 +20,7 @@ def C():
 
 temp = []
 arr = []
-for x in range(100):
+for x in range(50):
     temp.append(x)
 
 def main():
@@ -41,9 +41,11 @@ def main():
         looper()
         end = time.perf_counter()
 
+        
         print((end1-start1)*1000, " original")
         print((end1-start1)*1000 - newProfiler.function_runtime_overhead[-1], " original - overhead")
         print((end-start)*1000, " default")
+        
 
 if __name__ == "__main__":
     main()

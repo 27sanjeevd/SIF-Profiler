@@ -43,6 +43,18 @@ class Profiler:
 		"""
 		self.timing_isolation = timing_isolation
 
+		beg = time.perf_counter()
+
+		for _ in range(5000):
+		    self.test_func()
+		end = time.perf_counter()
+
+		self.calibration_count = (end - beg)/5000
+
+
+	def test_func(self):
+		return
+
 
 	def run(self, func_name, *args):
 		try:
@@ -51,19 +63,15 @@ class Profiler:
 		except Exception as e:
 			traceback.print_exc()
 			print(f"An error has occurred {e}")
-
-		sys.settrace(None)
+		finally:
+			sys.settrace(None)
 
 
 	def trace_calls(self, frame, event, arg):
 		beg = time.perf_counter()
+
 		if self.test_timing == True:
 			self.timing_trace_function(frame, event, arg, beg)
-
-		
-		if event != "call" and event != "return":
-			end = time.perf_counter()
-			self.function_overhead_stack[-1] += (end - beg) * 1000
 
 
 		return self.trace_calls
@@ -95,19 +103,17 @@ class Profiler:
 			self.function_call_counter += 1
 
 			function_name = frame.f_code.co_name
-			timestamp = time.perf_counter()
 
 			if len(self.function_stack) != 0:
-				self.function_stack[-1][3] = timestamp
+				self.function_stack[-1][3] = time.perf_counter()
 
-			self.function_overhead_stack[-1] += (timestamp - s_time) * 1000
+			self.function_overhead_stack[-1] += (time.perf_counter() - s_time) * 1000
 
-			self.function_stack.append([function_name, timestamp, 0, 0])
+			self.function_stack.append([function_name, time.perf_counter(), 0, 0])
 			self.function_overhead_stack.append(0)
 
 		elif event == "return":
 			prev = self.function_stack[-1]
-			curr_time = time.perf_counter();
 
 			"""
 			total time in milliseconds
@@ -135,6 +141,8 @@ class Profiler:
 				self.function_stack[-1][2] += (time.perf_counter() - self.function_stack[-1][3]) * 1000
 				self.function_stack[-1][3] = 0
 
+		self.function_overhead_stack[-1] += (time.perf_counter() - s_time) * \
+			1550 + self.calibration_count
 
 	def printFunctionTimings(self):
 		sorted_dict = dict(sorted(self.function_timings.items(), key=lambda item: -item[1]))
@@ -143,7 +151,7 @@ class Profiler:
 		for key, value in sorted_dict.items():
 			if amt == None:
 				amt = value
-			#print(f"Function {key} with time {value}")
+			print(f"Function {key} with time {value}")
 
 		return amt
 
