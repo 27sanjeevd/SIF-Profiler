@@ -53,13 +53,20 @@ def main():
     y = 1
     for x in range(y):
 
-        newProfiler = Profiler(test_timing=True, timed_functions=['getReport', 'parseReport'])
+        newProfiler = Profiler()
+        newProfiler.test_timing = True
+        newProfiler.timing_isolation = True
+        newProfiler.timing_functions=['getReport', 'parseReport']
         temp = []
 
         start1 = time.perf_counter()
         newProfiler.run(getReport)
         end1 = time.perf_counter()
-        end_profile = newProfiler.printFunctionTimings()
+
+        newProfiler.printFunctionTimings()
+        newProfiler.printLineTimings()
+
+        """
 
         #newProfiler.clear()
         
@@ -71,6 +78,7 @@ def main():
         print((end1-start1)*1000, " original")
         print((end1-start1)*1000 - newProfiler.function_runtime_overhead[-1], " original - overhead")
         print((end-start)*1000, " default")
+        """
         
 
 if __name__ == "__main__":
