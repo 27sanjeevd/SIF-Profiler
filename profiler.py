@@ -1,5 +1,6 @@
 import sys
 import time
+import json
 import traceback
 import linecache
 
@@ -8,7 +9,12 @@ class Profiler:
 		self.function_timings = {}
 		self.function_stack = []
 		self.function_runtime_overhead = [0]
+		self.total_time = 0
 
+		self.line_timings = {}
+		self.line_prev_time = -1
+		self.line_prev_no = -1
+		self.line_counter = 0
 
 		self.test_timing = test_timing
 		self.timing_isolation = timing_isolation
@@ -24,45 +30,71 @@ class Profiler:
 
 		self.calibration_count = (end - beg)/5000
 
+
+		self.profile_head_function = ""
+		
+
+
 	def test_func(self):
 		pass
 
+
+
 	def run(self, func_name, *args):
 	    try:
-	        sys.setprofile(self.trace_calls)
-	        func_name(*args)
+	    	self.profile_head_function = func_name.__name__
+	    	sys.settrace(self.trace_calls)
+	    	func_name(*args)
 	    except Exception as e:
-	        traceback.print_exc()
-	        print(f"An error has occurred {e}")
+	    	traceback.print_exc()
+	    	print(f"An error has occurred {e}")
 	    finally:
-	        sys.setprofile(None)
+	    	sys.settrace(None)
+	    	self.dumpFileTrace()
+
+
 
 	def trace_calls(self, frame, event, arg):
-		
 		
 		beg = time.perf_counter()
 
 		
+		if self.line_prev_time != -1 and (self.timing_functions == [] or \
+			frame.f_code.co_name in self.timing_functions):
+
+			runtime = (beg - self.line_prev_time) * 1000
+			if self.line_prev_no not in self.line_timings:
+				self.line_timings[self.line_prev_no] = [(self.line_counter, runtime)]
+			else:
+				self.line_timings[self.line_prev_no].append((self.line_counter, runtime))
+				self.line_counter += 1
+		
+
 		if self.test_timing:
-			self.function_timing(frame, event, arg, beg)
+			self.function_timing(frame, event, arg)
+		
+		
+		self.line_prev_no = frame.f_lineno
+		self.line_prev_time = time.perf_counter()
 		
 
-		#end = time.perf_counter()
-		#self.function_runtime_overhead[-1] += (end - beg) * 2000 + self.calibration_count
+		#adds the overhead of calling "function_timing" to the overhead
+		self.function_runtime_overhead[-1] += (time.perf_counter() - beg) * \
+			2000 + self.calibration_count * 2000
 		
-
 		return self.trace_calls
 
-	def function_timing(self, frame, event, arg, s_time):
+
+
+	def function_timing(self, frame, event, arg):
 		if event == "call":
 			self.function_call_timing(frame)
 
 		elif event == "return":
 			self.function_return_timing()
 		
-		#adds the overhead of calling "function_timing" to the overhead
-		self.function_runtime_overhead[-1] += (time.perf_counter() - s_time) * \
-			1950 + self.calibration_count
+
+
 
 	def function_call_timing(self, frame):
 		func_name = frame.f_code.co_name
@@ -77,6 +109,8 @@ class Profiler:
 		#add the current runtime to the overhead stack
 		self.function_runtime_overhead.append(0)
 
+
+
 	def function_return_timing(self):
 		prev = self.function_stack[-1]
 		temp = self.function_runtime_overhead[-1]
@@ -88,7 +122,7 @@ class Profiler:
 			self.function_runtime_overhead.pop(-1)
 
 		timestamp = time.perf_counter()
-		total_time = (timestamp - prev[1]) * 1000 - temp
+		total_time = (timestamp - prev[1]) * 2000 - temp
 
 		#adds the current funtime runtime info to the dictionary of values
 		if self.timing_functions == [] or self.function_stack[-1][0] in self.timing_functions:
@@ -97,14 +131,17 @@ class Profiler:
 			else:
 				self.function_timings[self.function_stack[-1][0]] += total_time
 
+			self.total_time += total_time
+
 		#removes it from the current stack
 		self.function_stack.pop(-1)
+
+
 
 	def printFunctionTimings(self):
 		for key, value in self.function_timings.items():
 			print(f"Function {key} has time {value}")
 
-
-
-
-
+	def dumpFileTrace(self):
+		with open(f'{self.profile_head_function}.json', 'w') as file:
+			json.dump(self.line_timings, file)
