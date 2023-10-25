@@ -51,6 +51,7 @@ class Profiler:
 
 	def run(self, func_name, *args):
 	    try:
+	    	self.clear()
 	    	self.profile_head_function = func_name.__name__
 	    	sys.settrace(self.trace_calls)
 	    	func_name(*args)
