@@ -51,4 +51,20 @@ newProfiler.timing_functions = ['getReport', 'parseReport']
 ```
 
 ### Profiling a Function
-To 
+To profile a function, call the code below to start execution of it. 
+
+```
+newProfiler.run(function_name)
+```
+
+The profiler starts execution of that specific function and stores its information during execution. Currently runs through the entire execution of the specified method. After completion of its execution, you can view performance analytics of it.
+
+### View Analytics through Command Line
+To view the output of the profiler through the command line, there are a few functions we can call. These are 
+
+```
+newProfiler.printFunctionTimings()
+newProfiler.printLineTimings()
+```
+
+Which output the function timings and line timings overall information onto the command line. You can view more indepth analytics through the Analytics tool
