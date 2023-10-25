@@ -20,12 +20,14 @@ from sif-profiler import Profiler, Analytics
 
 ## Usage
 
+### Calling it
 Once you have it installed, you can start using it to trace your code. Simply start by calling 
 
 ```
 newProfiler = Profiler()
 ```
 
+### Specifying Tracing Information
 Now that it's created, we need to start by specifying what values we want to trace with our function. Depending on what we specify, the profiler will track information about this, and dump it to the json file. Here are the current values that can be specified
 
 - test_lines
@@ -39,11 +41,14 @@ Now that it's created, we need to start by specifying what values we want to tra
 - timing_function
   - List of function names to be analyzed. If a function exists in this list, then information about it will be collected. If we're tracing lines, then only if a line exists in one of these functions will it be analyzed. If nothing is passed into this variable, then every function/line will be analyzed
 
- Now to specify information about which variable we want to utilized, you can use code like this
+Now to specify information about which variable we want to utilized, you can use code like this
 
 ```
 newProfiler.test_timing = True
 newProfiler.test_lines = True
 newProfiler.timing_isolation = True
-newProfiler.timing_functions=['getReport', 'parseReport']
+newProfiler.timing_functions = ['getReport', 'parseReport']
 ```
+
+### Profiling a Function
+To 
