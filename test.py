@@ -54,9 +54,12 @@ def main():
     for x in range(y):
 
         newProfiler = Profiler()
+
         newProfiler.test_timing = True
+        newProfiler.test_lines = True
         newProfiler.timing_isolation = True
-        newProfiler.timing_functions=['getReport', 'parseReport']
+        newProfiler.timing_functions = ['getReport', 'parseReport']
+
         temp = []
 
         start1 = time.perf_counter()

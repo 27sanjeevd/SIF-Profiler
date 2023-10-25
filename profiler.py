@@ -1,15 +1,21 @@
 import sys
 import time
 import json
+import psutil
 import traceback
 import linecache
 
 class Profiler:
-	def __init__(self, test_timing=False, timing_isolation=False, timing_functions=None):
+	def __init__(self, test_timing=True, test_lines=False, timing_isolation=False, \
+		timing_functions=None, test_memory=False):
 		self.function_timings = {}
 		self.function_stack = []
 		self.function_runtime_overhead = [0]
 		self.total_time = 0
+
+		self.memory_usage_track = {}
+		self.memory_prev_time = -1
+		self.memory_prev_no = -1
 
 		self.line_timings_track = {}
 		self.line_timings_overall = {}
@@ -17,7 +23,9 @@ class Profiler:
 		self.line_prev_no = -1
 		self.line_counter = 0
 
+		self.test_lines = test_lines
 		self.test_timing = test_timing
+		self.test_memory = test_memory
 		self.timing_isolation = timing_isolation
 
 		self.timing_functions = []
@@ -35,7 +43,7 @@ class Profiler:
 		self.profile_head_function = ""
 		
 
-
+	#test function used to test how long the function call of the tracing function takes
 	def test_func(self):
 		pass
 
@@ -58,31 +66,15 @@ class Profiler:
 	def trace_calls(self, frame, event, arg):
 		
 		beg = time.perf_counter()
-
-		#if this wasn't the first line executed, and an acceptable function is being run
-		if self.line_prev_time != -1 and (self.timing_functions == [] or \
-			frame.f_code.co_name in self.timing_functions):
-
-			#gets the runtime of the previous line
-			runtime = (beg - self.line_prev_time) * 1000
-
-			#stores that previous line's runtime in the dictionary
-			if self.line_prev_no not in self.line_timings_track:
-
-				#line_timings_track counts the individual runtimes every time the line is called
-				self.line_timings_track[self.line_prev_no] = [(self.line_counter, runtime)]
-				#line_timings_overall counts the overall runtime of each specific line
-				self.line_timings_overall[self.line_prev_no] = runtime
-
-			else:
-				self.line_timings_track[self.line_prev_no].append((self.line_counter, runtime))
-				self.line_timings_overall[self.line_prev_no] += runtime
-			#updates the line counter to track what order the lines have been called in
-			self.line_counter += 1
 		
-		#calls teh timing function
+		#calls the timing function
 		if self.test_timing:
-			self.function_timing(frame, event, arg)
+			curr_time = time.perf_counter()
+			self.function_timing(frame, event, arg, curr_time)
+
+			#line timing test function
+			if self.test_lines:
+				self.line_timing(frame, event, arg, beg)
 		
 		
 		#stores new line information in the variables
@@ -99,34 +91,61 @@ class Profiler:
 
 
 
-	def function_timing(self, frame, event, arg):
+	def line_timing(self, frame, event, arg, beg):
+		if self.line_prev_time != -1 and \
+			(self.timing_functions == [] or frame.f_code.co_name in self.timing_functions):
+		
+			#gets the runtime of the previous line
+			runtime = (beg - self.line_prev_time) * 1000
+
+			#stores that previous line's runtime in the dictionary
+			if self.line_prev_no not in self.line_timings_track:
+
+				#line_timings_track counts the individual runtimes every time the line is called
+				self.line_timings_track[self.line_prev_no] = [(self.line_counter, runtime)]
+				#line_timings_overall counts the overall runtime of each specific line
+				self.line_timings_overall[self.line_prev_no] = runtime
+
+			else:
+				self.line_timings_track[self.line_prev_no].append((self.line_counter, runtime))
+				self.line_timings_overall[self.line_prev_no] += runtime
+			#updates the line counter to track what order the lines have been called in
+			self.line_counter += 1
+
+
+
+
+	def function_timing(self, frame, event, arg, curr_time):
 		if event == "call":
-			self.function_call_timing(frame)
+			self.function_call_timing(frame, curr_time)
 
 		elif event == "return":
-			self.function_return_timing()
+			self.function_return_timing(curr_time)
 		
 
 
-
-	def function_call_timing(self, frame):
+	def function_call_timing(self, frame, curr_time):
+		#time diff as we don't start the tracker immediately at the beginning of profiler
+		diff_time = time.perf_counter() - curr_time
 		func_name = frame.f_code.co_name
 
 		#if we're timing isolation, then add the time of when current function gets paused 
 		#to the function stack
 		if self.timing_isolation and len(self.function_stack) > 0:
-			self.function_stack[-1][2] = time.perf_counter()
+			self.function_stack[-1][2] = time.perf_counter() - diff_time
 
 		#add the new function information to the function_stack
-		self.function_stack.append([func_name, time.perf_counter(), 0, 0])
+		self.function_stack.append([func_name, time.perf_counter() - diff_time, 0, 0])
 		#add the current runtime to the overhead stack
 		self.function_runtime_overhead.append(0)
 
 
 
-	def function_return_timing(self):
+	def function_return_timing(self, curr_time):
 		prev = self.function_stack[-1]
 		temp = self.function_runtime_overhead[-1]
+
+		diff_time = time.perf_counter() - curr_time
 
 		#if timing isolation and there was a function before it
 		if not self.timing_isolation and len(self.function_runtime_overhead) > 1:
@@ -134,7 +153,7 @@ class Profiler:
 			self.function_runtime_overhead[-2] += self.function_runtime_overhead[-1]
 			self.function_runtime_overhead.pop(-1)
 
-		timestamp = time.perf_counter()
+		timestamp = time.perf_counter() - diff_time
 		total_time = (timestamp - prev[1]) * 2000 - temp
 
 		#adds the current funtime runtime info to the dictionary of values
@@ -169,6 +188,24 @@ class Profiler:
 	def dumpFileTrace(self):
 		with open(f'{self.profile_head_function}.json', 'w') as file:
 			json.dump(self.line_timings_track, file)
+
+	def clear(self):
+		self.function_timings = {}
+		self.function_stack = []
+		self.function_runtime_overhead = [0]
+		self.total_time = 0
+
+		self.memory_usage_track = {}
+		self.memory_prev_time = -1
+		self.memory_prev_no = -1
+
+		self.line_timings_track = {}
+		self.line_timings_overall = {}
+		self.line_prev_time = -1
+		self.line_prev_no = -1
+		self.line_counter = 0
+
+		self.profile_head_function = ""
 
 
 
