@@ -67,4 +67,4 @@ newProfiler.printFunctionTimings()
 newProfiler.printLineTimings()
 ```
 
-Which output the function timings and line timings overall information onto the command line. You can view more indepth analytics through the Analytics tool
+Which output the function timings and line timings overall information respectively onto the command line. You can view more indepth analytics through the Analytics tool
