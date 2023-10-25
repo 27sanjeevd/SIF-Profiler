@@ -26,3 +26,7 @@ Once you have it installed, you can start using it to trace your code. Simply st
 tempName = Profiler()
 ```
 
+Now that it's created, we need to start by specifying what values we want to trace with our function. Depending on what we specify, the profiler will track information about this, and dump it to the json file. Here are the current values that can be specified
+
+- test_timing
+  - True/False value
