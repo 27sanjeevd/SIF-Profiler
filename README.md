@@ -12,4 +12,9 @@ All encompassing profiler meant to trace a multitude of different performance an
 pip install sif-profiler
 ```
 
-Now that you've installed the profiler, here are the steps to start profiling your method.
+Now that you've installed the profiler, here are the steps to start profiling your method. To import it into your code, use
+
+```
+from sif-profiler import Profiler, Analytics
+```
+
