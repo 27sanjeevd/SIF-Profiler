@@ -46,7 +46,7 @@ def parseReport(report):
 
 temp = []
 arr = []
-for x in range(50):
+for x in range(60):
     temp.append(x)
 
 def main():
