@@ -18,3 +18,11 @@ Now that you've installed the profiler, here are the steps to start profiling yo
 from sif-profiler import Profiler, Analytics
 ```
 
+## Usage
+
+Once you have it installed, you can start using it to trace your code. Simply start by calling 
+
+```
+tempName = Profiler()
+```
+
