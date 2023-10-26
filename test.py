@@ -56,6 +56,7 @@ def main():
         newProfiler = Profiler()
 
         newProfiler.test_timing = True
+        newProfiler.test_memory = True
         newProfiler.test_lines = True
         newProfiler.timing_isolation = True
         newProfiler.timing_functions = ['getReport', 'parseReport']
@@ -68,6 +69,7 @@ def main():
 
         newProfiler.printFunctionTimings()
         newProfiler.printLineTimings()
+        newProfiler.printLineMemory()
 
         """
 

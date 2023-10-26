@@ -14,8 +14,8 @@ class Profiler:
 		self.total_time = 0
 
 		self.memory_usage_track = {}
-		self.memory_prev_time = -1
-		self.memory_prev_no = -1
+		self.memory_usage_overall = {}
+		self.memory_prev_amt = -1
 
 		self.line_timings_track = {}
 		self.line_timings_overall = {}
@@ -41,6 +41,7 @@ class Profiler:
 
 
 		self.profile_head_function = ""
+		self.process_info = psutil.Process()
 		
 
 	#test function used to test how long the function call of the tracing function takes
@@ -67,6 +68,7 @@ class Profiler:
 	def trace_calls(self, frame, event, arg):
 		
 		beg = time.perf_counter()
+		curr_memory = self.process_info.memory_info().rss
 		
 		#calls the timing function
 		if self.test_timing:
@@ -76,6 +78,11 @@ class Profiler:
 			#line timing test function
 			if self.test_lines:
 				self.line_timing(frame, event, arg, beg)
+
+		if self.test_memory:
+
+			if self.test_lines:
+				self.line_memory(frame, event, arg, curr_memory)
 		
 		
 		#stores new line information in the variables
@@ -87,8 +94,29 @@ class Profiler:
 		#adds the overhead of calling "function_timing" to the overhead
 		self.function_runtime_overhead[-1] += (time.perf_counter() - beg) * \
 			2000 + self.calibration_count * 2000
+
+		if self.timing_functions == [] or frame.f_code.co_name in self.timing_functions:
+			self.memory_prev_amt = self.process_info.memory_info().rss
+
+
 		
 		return self.trace_calls
+
+
+	def line_memory(self, frame, event, arg, mem):
+		if self.line_prev_time != -1 and \
+			(self.timing_functions == [] or frame.f_code.co_name in self.timing_functions):
+
+			mem_diff = mem - self.memory_prev_amt
+
+
+			if self.line_prev_no not in self.memory_usage_track:
+				self.memory_usage_track[self.line_prev_no] = [(self.line_counter, mem_diff)]
+				self.memory_usage_overall[self.line_prev_no] = mem_diff
+
+			else:
+				self.memory_usage_track[self.line_prev_no].append((self.line_counter, mem_diff))
+				self.memory_usage_overall[self.line_prev_no] += mem_diff
 
 
 
@@ -182,6 +210,12 @@ class Profiler:
 		sorted_items = sorted(self.line_timings_overall.items(), key=lambda x: x[1], reverse=True)
 		for key, value in sorted_items:
 			print(f"Line {key} has time {value}")
+		print("----------------")
+
+	def printLineMemory(self):
+		sorted_items = sorted(self.memory_usage_overall.items(), key=lambda x: x[1], reverse=True)
+		for key, value in sorted_items:
+			print(f"Line {key} has memory {value}")
 		print("----------------")
 
 
