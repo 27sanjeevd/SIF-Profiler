@@ -79,8 +79,10 @@ class Profiler:
 			if self.test_lines:
 				self.line_timing(frame, event, arg, beg)
 
+		#calls the memory function
 		if self.test_memory:
 
+			#line memory test function
 			if self.test_lines:
 				self.line_memory(frame, event, arg, curr_memory)
 		
@@ -95,6 +97,7 @@ class Profiler:
 		self.function_runtime_overhead[-1] += (time.perf_counter() - beg) * \
 			2000 + self.calibration_count * 2000
 
+		#tracks the current process memory amount before the next line executes
 		if self.timing_functions == [] or frame.f_code.co_name in self.timing_functions:
 			self.memory_prev_amt = self.process_info.memory_info().rss
 
@@ -222,7 +225,11 @@ class Profiler:
 
 	def dumpFileTrace(self):
 		with open(f'{self.profile_head_function}.json', 'w') as file:
-			json.dump(self.line_timings_track, file)
+			json.dump([self.line_timings_track,
+				self.line_timings_overall,
+				self.function_timings,
+				self.memory_usage_track,
+				self.memory_usage_overall], file)
 
 	def clear(self):
 		self.function_timings = {}
