@@ -1,5 +1,6 @@
 from profiler import Profiler
 from analytics import Analytics
+from profilerast import ProfilerAST
 import requests
 import re
 import json
@@ -19,7 +20,10 @@ def B():
     arr.append(temp[:])
 
 def C():
-    global temp, arr
+    temp = []
+    arr = []
+    for x in range(60):
+        temp.append(x)
     arr.append(temp[:])
 
 def getReport():
@@ -45,38 +49,13 @@ def parseReport(report):
         pass
 
 
-temp = []
-arr = []
-for x in range(60):
-    temp.append(x)
 
 def main():
     y = 1
     for x in range(y):
 
-        newProfiler = Profiler()
-
-        newProfiler.test_timing = True
-        newProfiler.test_memory = True
-        newProfiler.test_lines = True
-        newProfiler.timing_isolation = True
-        newProfiler.timing_functions = ['getReport', 'parseReport']
-
-        temp = []
-
-        start1 = time.perf_counter()
-        newProfiler.run(getReport)
-        end1 = time.perf_counter()
-
-        newProfiler.printFunctionTimings()
-        newProfiler.printLineTimings()
-        newProfiler.printLineMemory()
-
-        
-        analysis = Analytics()
-        analysis.load("getReport")
-
-        analysis.view(3)
+        newProfiler = ProfilerAST()
+        newProfiler.run(C)
         
 
 if __name__ == "__main__":
