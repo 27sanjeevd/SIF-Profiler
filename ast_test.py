@@ -5,7 +5,7 @@ import requests
 import re
 import json
 import time
-
+"""
 def B(temp, arr):
     arr.append(temp[:])
 
@@ -26,6 +26,21 @@ def main():
         newProfiler = ProfilerAST()
         newProfiler.run(C)
         
+"""
 
-if __name__ == "__main__":
-    main()
+def main():
+    C()
+
+def C():
+    temp = []
+    arr = []
+    for x in range(10):
+        temp.append(x)
+
+    arr.append(temp[:])
+
+    B(temp, arr)
+
+def B(temp, arr):
+    arr.append(temp)
+

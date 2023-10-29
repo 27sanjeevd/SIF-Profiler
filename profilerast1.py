@@ -28,3 +28,32 @@ def profile(func):
 			function_timings[func.__name__] = execution
 		else:
 			function_timings[func.__name__] += execution
+
+		total_time += execution
+		return result
+	return wrapper
+
+def walker(node):
+	print("************")
+	for n in ast.walk(node):
+		pass
+
+
+
+if __name__ == "__main__":
+	if len(sys.argv) != 3:
+		print("Usage: python3 profilerast1.py <path/to/code_file.py> <function_name>")
+	else:
+		file_path = sys.argv[1]
+		function_name = sys.argv[2]
+
+		try:
+			ast1 = get_ast(file_path)
+			function_node = get_function(ast1, function_name)
+			
+			for node in ast.walk(function_node):
+
+				print(ast.dump(node, indent=4))
+				print("---")
+		except Exception as e:
+			print(f"An error occurred: {e}")
