@@ -36,7 +36,29 @@ def profile(func):
 def walker(node):
 	print("************")
 	for n in ast.walk(node):
-		pass
+		if isinstance(n, ast.Call):
+			if isinstance(n.func, ast.Name):
+				print("=======")
+				print("Function Call:")
+				print(ast.dump(n, indent=4))
+
+				walker(n.func)
+		print("---")
+
+class FunctionASTVisitor(ast.NodeVisitor):
+    def __init__(self, source_code):
+        self.source_code = source_code
+
+    def visit_Call(self, node):
+        if isinstance(node.func, ast.Name):
+            print("Function Call:", node.func.id)
+            called_function_name = node.func.id
+
+            called_function_ast = ast.parse(self.source_code)
+            called_function_visitor = FunctionASTVisitor(self.source_code)
+            called_function_visitor.visit(called_function_ast)
+
+
 
 
 
@@ -50,10 +72,18 @@ if __name__ == "__main__":
 		try:
 			ast1 = get_ast(file_path)
 			function_node = get_function(ast1, function_name)
+
+			walker(function_node)
+
+			"""
+			walker(function_node)
+			visitor = FunctionASTVisitor()
+			visitor.visit(function_node)
 			
 			for node in ast.walk(function_node):
 
 				print(ast.dump(node, indent=4))
 				print("---")
+			"""
 		except Exception as e:
 			print(f"An error occurred: {e}")
